@@ -1,0 +1,19 @@
+// app global css in SCSS form
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+
+.inter {
+  font-family: "Inter", sans-serif;
+}
+.primary-bg {
+  background-color: $primary-bg;
+}
+.secondary-bg {
+  background-color: $secondary-bg;
+}
+
+.primary-text {
+  color: $primary-text;
+}
+.secondary-text {
+  color: $secondary-text;
+}

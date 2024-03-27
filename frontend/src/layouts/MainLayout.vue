@@ -7,7 +7,7 @@
         </q-btn>
         <div class="flex items-center justify-between month-slider-container">
           <q-btn dense flat label="<" class="control-btn" @click="prevMonth" />
-          <div class="secondary-text">апрель</div>
+          <div class="secondary-text">{{ month }}</div>
           <q-btn dense flat label=">" class="control-btn" @click="nextMonth" />
         </div>
         <q-btn dense flat @click="toggleRightDrawer" class="drawer-btn">
@@ -25,15 +25,7 @@
       :width="200"
     >
       <q-list>
-        <q-item-label header class="title q-mb-lg">
-          Money<span class="title-elem">Up</span>
-        </q-item-label>
-        <NavLink
-          v-for="link in linksList"
-          :key="link.title"
-          v-bind="link"
-          :toggleActive="toggleActive"
-        />
+        <nav-bar />
       </q-list>
     </q-drawer>
 
@@ -55,47 +47,47 @@
 </template>
 
 <script>
-import { defineComponent, ref } from "vue";
-import NavLink from "../components/NavLink.vue";
-import AddBalance from "../components/AddBalance.vue";
-import { useRoute, useRouter } from 'vue-router'
-import { useCategoriesStore } from "src/stores/categories";
+import { defineComponent, ref, watch } from "vue";
 
-const linksList = [
-  {
-    title: "Главная",
-    link: "/",
-    isActive: ref(true),
-  },
-  {
-    title: "Доходы",
-    link: "/income",
-    isActive: ref(false),
-  },
-  {
-    title: "Расходы",
-    link: "/expense",
-    isActive: ref(false),
-  },
-  {
-    title: "Регистрация",
-    link: "/signup",
-    isActive: ref(false),
-  },
-];
+import { date } from "quasar";
+
+import NavBar from "../components/NavBar.vue";
+import AddBalance from "../components/AddBalance.vue";
+
+import { useBalanceStore } from "src/stores/balance";
+
 export default defineComponent({
-  components: { NavLink, AddBalance },
+  components: { NavBar, AddBalance },
   name: "MainLayout",
 
   setup() {
-    const route = useRoute()
-    console.log(route.path)
+    const balanceStore = useBalanceStore();
+
+
     const leftDrawerOpen = ref(false);
     const rightDrawerOpen = ref(false);
 
-    const categoriesStore = useCategoriesStore();
+    const fullCurrentDate = ref(balanceStore.getFullCurrentDate);
+    let formatCurrentDate = date.formatDate(fullCurrentDate.value, "MMMM");
+    const month = ref(formatCurrentDate);
+
+    watch(
+      () => balanceStore.currentDate,
+      () => {
+        fullCurrentDate.value = balanceStore.getFullCurrentDate;
+        formatCurrentDate = date.formatDate(fullCurrentDate.value, "MMMM");
+        month.value = formatCurrentDate;
+      }
+    );
+    function DateFunc(newDate) {
+      const formatedNewDate = date
+        .formatDate(newDate, "YYYY-MM-DD")
+        .slice(0, 7);
+      balanceStore.setCurrentDate(formatedNewDate);
+      balanceStore.setBalanceItems();
+    }
     return {
-      linksList,
+      month,
 
       leftDrawerOpen,
       toggleLeftDrawer() {
@@ -107,17 +99,13 @@ export default defineComponent({
         rightDrawerOpen.value = !rightDrawerOpen.value;
       },
 
-      toggleActive(item) {
-        for (let [key, value_] of Object.entries(linksList)) {
-          if (value_.title === item) value_.isActive.value = true;
-          else value_.isActive.value = false;
-        }
-      },
       nextMonth() {
-        categoriesStore.setCurrentDate("2024-04");
+        const newDate = date.addToDate(fullCurrentDate.value, { months: 1 });
+        DateFunc(newDate);
       },
       prevMonth() {
-        categoriesStore.setCurrentDate("2024-03");
+        const newDate = date.subtractFromDate(fullCurrentDate.value, { months: 1 });
+        DateFunc(newDate);
       },
     };
   },
@@ -149,15 +137,6 @@ export default defineComponent({
   }
 }
 
-.title {
-  font-family: "Bevan", serif;
-  font-weight: 400;
-  font-style: normal;
-  font-size: x-large;
-  color: $primary-text;
 
-  .title-elem {
-    color: $primary-btn;
-  }
-}
 </style>
+

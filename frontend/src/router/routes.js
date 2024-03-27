@@ -8,13 +8,26 @@ const routes = [
       { path: "expense", component: () => import("pages/ExpensePage.vue") },
     ],
   },
-
-  // Always leave this as last one,
-  // but you can also remove it
+  {
+    path: "/categories",
+    component: () => import("layouts/CategoriesLayout.vue"),
+    children: [
+      {
+        path: "income",
+        component: () => import("pages/IncomeCategoriesPage.vue"),
+      },
+      {
+        path: "expense",
+        component: () => import("pages/ExpenseCategoriesPage.vue"),
+      },
+    ],
+  },
   {
     path: "/signup",
-    component: () => import("pages/Authentication.vue"),
+    component: () => import("pages/AuthenticationPage.vue"),
   },
+  // Always leave this as last one,
+  // but you can also remove it
   {
     path: "/:catchAll(.*)*",
     component: () => import("pages/ErrorNotFound.vue"),

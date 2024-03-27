@@ -18,6 +18,9 @@
             v-model="operation"
             :options="operationOptions"
             label="Вид операции"
+            :color="operationClass"
+            :bg-color="operationClass"
+            label-color="grey-1"
             class="q-pb-none"
           />
         </q-card-section>
@@ -26,24 +29,39 @@
           <q-input
             ref="sumValidate"
             filled
-            v-model="sum"
+            v-model.number="sum"
+            type="number"
             label="сумма"
             lazy-rules
-            type="number"
             prefix="₽"
-            :rules="[(val) => (val && val.length > 0) || 'Напишите что-нибудь']"
+            :rules="[(val) => val || 'Укажите сумму']"
           />
         </q-card-section>
 
         <q-card-section class="q-pt-none q-mt-none">
           <q-select
             filled
+            use-input
+            hide-selected
+            fill-input
+            input-debounce="0"
+            @filter="filterFn"
             v-model="category"
             :options="categoryOptions"
+            option-value="id"
+            option-label="name"
             ref="categoryValidate"
-            :rules="[(val) => (val && val.length > 0) || 'Выберите что-нибудь']"
+            :rules="[(val) => val || 'Выберите что-нибудь']"
             label="Категория"
-          />
+          >
+            <template v-slot:no-option>
+              <q-item>
+                <q-item-section class="text-grey">
+                  Ничего не найденно
+                </q-item-section>
+              </q-item>
+            </template>
+          </q-select>
         </q-card-section>
         <q-card-section class="q-pt-none">
           <q-input
@@ -84,56 +102,72 @@
 </template>
 
 <script>
-import { defineComponent, ref, watch } from "vue";
+import { computed, defineComponent, ref, watch } from "vue";
 import { date } from "quasar";
 import { storeToRefs } from "pinia";
-import { useCategoriesStore } from "src/stores/categories";
+import { useModalStore } from "src/stores/modal";
+import { useBalanceStore } from "src/stores/balance";
 
 export default defineComponent({
   name: "AddBalanceModal",
   setup() {
-    const categoriesStore = useCategoriesStore();
-    const { isAddModal, selectedItem, balanceModal } =
-      storeToRefs(categoriesStore);
+    const modalStore = useModalStore();
+    const { isAddModal, selectedItem, balanceModal } = storeToRefs(modalStore);
+
+    const balanceStore = useBalanceStore();
+    const { currentOperationType } = storeToRefs(balanceStore);
 
     const sum = ref(null);
     const sumValidate = ref(null);
 
-    const operation = ref("Google");
+    const operation = ref(null);
     const operationOptions = [
-      "Google",
-      "Facebook",
-      "Twitter",
-      "Apple",
-      "Oracle",
+      { value: "income", label: "Доход" },
+      { value: "expense", label: "Расход" },
     ];
+    const operationClass = computed(() => {
+      return operation.value.value === "income" ? "green" : "primary";
+    });
 
     const category = ref("");
     const categoryValidate = ref(null);
-    const categoryOptions = ["Oracle", "jija"];
+    const categoryOptions = ref(balanceStore.getCategoriesItems);
 
     const timeStamp = Date.now();
     const formattedString = date.formatDate(timeStamp, "DD.MM.YY");
     const date_ = ref(formattedString);
 
     watch(
-      [() => categoriesStore.isAddModal, () => categoriesStore.selectedItem],
+      [() => modalStore.balanceModal, () => modalStore.selectedItem],
       () => {
-        if (!categoriesStore.isAddModal) {
-          date_.value = selectedItem.value.date;
-          operation.value = selectedItem.value.operation;
+        if (!isAddModal.value) {
+          const dayToStamp = date.extractDate(
+            selectedItem.value.date,
+            "YYYY-MM-DD"
+          );
+          const item_date = date.formatDate(dayToStamp, "DD.MM.YY");
+          date_.value = item_date;
+
+          operation.value =
+            selectedItem.value.operation === "income"
+              ? operationOptions[0]
+              : operationOptions[1];
           category.value = selectedItem.value.category;
           sum.value = selectedItem.value.sum;
         } else {
           date_.value = formattedString;
-          operation.value = selectedItem.value.operation;
+          operation.value =
+            currentOperationType.value === "income"
+              ? operationOptions[0]
+              : operationOptions[1];
           category.value = null;
           sum.value = null;
         }
       }
     );
+
     const toggleActive = () => {
-      categoriesStore.toggleModal();
+      modalStore.toggleModal();
     };
     return {
       balanceModal,
@@ -141,41 +175,48 @@ export default defineComponent({
 
       operation,
       operationOptions,
+      operationClass,
       category,
       categoryValidate,
       categoryOptions,
-
       date_,
-
       sum,
       sumValidate,
       onSubmit() {
         sumValidate.value.validate();
         categoryValidate.value.validate();
-        console.log(isAddModal.value);
         if (!sumValidate.value.hasError && !categoryValidate.value.hasError) {
           const dayToStamp = date.extractDate(date_.value, "DD.MM.YY");
           const item_date = date.formatDate(dayToStamp, "YYYY-MM-DD");
           if (isAddModal.value) {
-            categoriesStore.addDate({
-              sum: Number(sum.value),
-              operation: operation.value,
+            balanceStore.addBalanceItem({
+              sum: sum.value,
+              operation: operation.value.value,
               category: category.value,
               date: item_date,
             });
           } else {
-            console.log(selectedItem.value);
-            categoriesStore.updateDate(selectedItem.value.id, {
-              sum: Number(sum.value),
-              operation: operation.value,
+            balanceStore.updateBalanceItem(selectedItem.value.position, {
+              id: selectedItem.value.id,
+              sum: sum.value,
+              operation: operation.value.value,
               category: category.value,
               date: item_date,
             });
           }
+          balanceStore.setChartItems();
           toggleActive();
           sum.value = null;
           category.value = null;
         }
+      },
+      filterFn(val, update, abort) {
+        update(() => {
+          const needle = val.toLowerCase();
+          categoryOptions.value = balanceStore.getCategoriesItems.filter(
+            (v) => v.name.toLowerCase().indexOf(needle) > -1
+          );
+        });
       },
     };
   },
@@ -186,5 +227,9 @@ export default defineComponent({
 .btn-full {
   width: 100%;
   background-color: $accent;
+}
+.bg-income {
+  background-color: $green;
+  color: $green;
 }
 </style>

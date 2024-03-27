@@ -21,7 +21,8 @@ export default defineComponent({
       required: true,
     },
   },
-  setup() {
+  setup(props) {
+    console.log(...props.category)
     return {};
   },
 });

@@ -9,7 +9,7 @@
         v-for="(item, key) in itemsObject"
         :key="key"
         v-bind="item"
-        :id="key"
+        :position="key"
       />
     </q-list>
   </div>

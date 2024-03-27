@@ -11,7 +11,7 @@
     </q-tabs>
     <div v-if="tab === 'date'">
       <ListByDate
-        v-for="(itemsObject, date, index) in date[currentDate]"
+        v-for="(itemsObject, date, index) in balanceItems"
         :key="index"
         :itemsObject="itemsObject"
         :date="date"
@@ -34,22 +34,23 @@
         push
         round
         class="btn"
-        color="indigo-9"
         icon="add"
         size="1.7rem"
+        :color="btnClass"
         @click="toggleModal"
       />
     </div>
 
-    <AddBalanceModal :isAdd="true" />
+    <AddBalanceModal />
   </div>
 </template>
 
 <script>
-import { defineComponent, ref, watch } from "vue";
+import { computed, defineComponent, ref, watch } from "vue";
 
 import { storeToRefs } from "pinia";
-import { useCategoriesStore } from "src/stores/categories";
+import { useBalanceStore } from "src/stores/balance";
+import { useModalStore } from "src/stores/modal";
 
 import AddBalanceModal from "./AddBalanceModal.vue";
 import ListByDate from "./ListByDate.vue";
@@ -59,35 +60,41 @@ export default defineComponent({
   name: "AddBalance",
   components: { AddBalanceModal, ListByDate, CategoryCard },
   setup() {
-    const categoriesStore = useCategoriesStore();
+    const balanceStore = useBalanceStore();
+    const { currentOperationType } = storeToRefs(balanceStore);
+
+    const modalStore = useModalStore();
+    const { isAddModal, balanceModal } = storeToRefs(modalStore);
+
     const tab = ref("date");
-
-    const { isAddModal, balanceModal, currentDate } =
-      storeToRefs(categoriesStore);
-
-    const date = ref(categoriesStore.getFormatedDateItems);
-    const categories = ref(categoriesStore.getFormatedCategoriesItems);
+    const balanceItems = ref(balanceStore.getFormatedBalanceItems);
+    const categories = ref(balanceStore.getFormatedCategoriesItems);
     watch(
-      () => categoriesStore.date,
+      () => balanceStore.balanceItems,
       () => {
-        date.value = categoriesStore.getFormatedDateItems;
-        categories.value = categoriesStore.getFormatedCategoriesItems;
+        balanceItems.value = balanceStore.getFormatedBalanceItems;
+        categories.value = balanceStore.getFormatedCategoriesItems;
       },
       { deep: true }
     );
+    const btnClass = computed(() => {
+      return currentOperationType.value === "income" ? "positive" : "indigo-9";
+    });
     const toggleModal = () => {
-      categoriesStore.toggleModal();
-      categoriesStore.setAddModalTrue();
+      modalStore.toggleModal();
+      modalStore.setAddModalTrue();
     };
     return {
+      currentOperationType,
       categories,
       isAddModal,
       toggleModal,
-      date,
-      currentDate,
+      balanceItems,
 
       tab,
       balanceModal,
+
+      btnClass,
     };
   },
 });

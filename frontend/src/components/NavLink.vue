@@ -15,7 +15,7 @@
 </template>
 
 <script>
-import { defineComponent, ref, watch } from "vue";
+import { defineComponent, watch } from "vue";
 
 export default defineComponent({
   name: "NavLink",

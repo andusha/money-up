@@ -1,0 +1,24 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+fastapi = "*"
+uvicorn = "*"
+python-dotenv = "*"
+sqlmodel = "*"
+python-multipart = "*"
+sqlalchemy = "*"
+pydantic-settings = "*"
+bcrypt = "*"
+fastapi-login = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.11"
+
+[scripts]
+prod = 'python run.py prod'
+dev = 'python run.py dev'

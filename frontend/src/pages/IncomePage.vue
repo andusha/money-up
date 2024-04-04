@@ -17,16 +17,18 @@ import BalanceDonut from "components/charts/BalanceDonut.vue";
 import { useBalanceStore } from "src/stores/balance";
 import { storeToRefs } from "pinia";
 
+import { api } from "../boot/axios";
 export default defineComponent({
   name: "IncomePage",
   components: { BalanceDonut },
   setup() {
     const balanceStore = useBalanceStore();
     balanceStore.setCurrentOperationType("income");
-    const { chartItems, currentOperationType } = storeToRefs(balanceStore);
+    const { chartItems, currentOperationType, token } = storeToRefs(balanceStore);
     onMounted(async () => {
       await balanceStore.setBalanceItems();
-    });
+      balanceStore.setChartItems()
+    })
     return {
       chartItems,
       currentOperationType,

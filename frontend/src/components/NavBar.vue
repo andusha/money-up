@@ -6,7 +6,7 @@
     v-for="link in linksList"
     :key="link.title"
     v-bind="link"
-    :toggleActive="toggleActive"
+    @toggleActive="toggleActive"
   />
 </template>
 
@@ -32,7 +32,7 @@ const linksList = [
     isActive: ref(false),
   },
   {
-    title: "Регистрация",
+    title: "Выйти",
     link: "/signup",
     isActive: ref(false),
   },

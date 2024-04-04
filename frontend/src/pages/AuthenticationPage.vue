@@ -34,21 +34,6 @@
                 </template>
               </q-input>
               <q-input
-                ref="usernameValidate"
-                v-if="register"
-                square
-                clearable
-                v-model="username"
-                lazy-rules
-                :rules="[required, short]"
-                type="username"
-                label="Пользователь"
-              >
-                <template v-slot:prepend>
-                  <q-icon name="person" />
-                </template>
-              </q-input>
-              <q-input
                 ref="passwordValidate"
                 square
                 clearable
@@ -112,15 +97,20 @@
 </template>
 
 <script>
-import { defineComponent, ref } from "vue";
+import { defineComponent, ref, watch } from "vue";
 import { useQuasar } from "quasar";
-
+import { useAuthStore } from "../stores/auth";
+import { useRouter } from "vue-router";
+import { storeToRefs } from "pinia";
 export default defineComponent({
   name: "AuthenticationPage",
   setup() {
+    const authStore = useAuthStore();
+
+    const router = useRouter();
+
     const title = ref("Авторизация");
     const email = ref("");
-    const username = ref("");
     const password = ref("");
     const repassword = ref("");
     const register = ref(false);
@@ -130,15 +120,34 @@ export default defineComponent({
     const visibilityIcon = ref("visibility");
 
     const emailValidate = ref(null);
-    const usernameValidate = ref(null);
     const passwordValidate = ref(null);
     const repasswordValidate = ref(null);
 
     const $q = useQuasar();
+
+    const registration = async (email, password) => {
+      await authStore.signup(email, password);
+      await authStore.login(email, password);
+      router.push({ path: "/" });
+    };
+
+    const login = async (email, password) => {
+      await authStore.login(email, password);
+      router.push({ path: "/" });
+    };
+    watch(
+      () => authStore.msg,
+      () => {
+        $q.notify({
+          icon: authStore.msg.icon,
+          color: authStore.msg.color,
+          message: authStore.msg.msg,
+        });
+      }
+    );
     return {
       title,
       email,
-      username,
       password,
       repassword,
       register,
@@ -147,7 +156,6 @@ export default defineComponent({
       visibility,
       visibilityIcon,
       emailValidate,
-      usernameValidate,
       passwordValidate,
       repasswordValidate,
 
@@ -169,25 +177,23 @@ export default defineComponent({
       submit() {
         if (register.value) {
           emailValidate.value.validate();
-          usernameValidate.value.validate();
           passwordValidate.value.validate();
           repasswordValidate.value.validate();
+          if (
+            !emailValidate.value.hasError &&
+            !passwordValidate.value.hasError &&
+            !repasswordValidate.value.hasError
+          ) {
+            registration(email.value, password.value);
+          }
         } else {
           emailValidate.value.validate();
           passwordValidate.value.validate();
         }
 
         if (!register.value) {
-          if (
-            !emailValidate.value.hasError &&
-            !passwordValidate.value.hasError
-          ) {
-            $q.notify({
-              icon: "done",
-              color: "positive",
-              message: "Авторизация",
-            });
-          }
+          if (!emailValidate.value.hasError && !passwordValidate.value.hasError)
+            login(email.value, password.value);
         }
       },
       switchTypeForm() {

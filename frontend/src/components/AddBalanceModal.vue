@@ -131,7 +131,7 @@ export default defineComponent({
 
     const category = ref("");
     const categoryValidate = ref(null);
-    const categoryOptions = ref(balanceStore.getCategoriesItems);
+    const categoryOptions = ref(null);
 
     const timeStamp = Date.now();
     const formattedString = date.formatDate(timeStamp, "DD.MM.YY");
@@ -204,6 +204,7 @@ export default defineComponent({
               date: item_date,
             });
           }
+          balanceStore.updateBalanceStats(operation.value.value, sum.value);
           balanceStore.setChartItems();
           toggleActive();
           sum.value = null;
@@ -214,7 +215,9 @@ export default defineComponent({
         update(() => {
           const needle = val.toLowerCase();
           categoryOptions.value = balanceStore.getCategoriesItems.filter(
-            (v) => v.name.toLowerCase().indexOf(needle) > -1
+            (v) =>
+              v.name.toLowerCase().indexOf(needle) > -1 &&
+              v.operation === operation.value.value
           );
         });
       },

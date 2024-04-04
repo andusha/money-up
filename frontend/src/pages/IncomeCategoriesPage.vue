@@ -15,10 +15,7 @@ export default defineComponent({
   components: { CategoriesPage },
   setup() {
     const balanceStore = useBalanceStore();
-    balanceStore.setCurrentOperationType('income');
-    onMounted(async () => {
-      //await balanceStore.setCategoriesItems();
-    });
+    balanceStore.setCurrentOperationType("income");
     return {};
   },
 });

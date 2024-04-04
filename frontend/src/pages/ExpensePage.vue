@@ -26,6 +26,7 @@ export default defineComponent({
     const { chartItems, currentOperationType } = storeToRefs(balanceStore);
     onMounted(async () => {
       await balanceStore.setBalanceItems();
+      balanceStore.setChartItems()
     });
     return {
       chartItems,

@@ -21,7 +21,7 @@
 </template>
 
 <script>
-import { computed, defineComponent } from "vue";
+import { computed, defineComponent, watch } from "vue";
 import { storeToRefs } from "pinia";
 
 import { useModalStore } from "src/stores/modal";
@@ -63,7 +63,7 @@ export default defineComponent({
     const { isAddModal } = storeToRefs(modalStore);
     const removeItemOnClick = (itemId) => {
       balanceStore.removeBalanceItem(itemId);
-      balanceStore.setChartItems()
+      balanceStore.setChartItems();
     };
 
     const toggleModal = () => {

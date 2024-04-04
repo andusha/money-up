@@ -41,8 +41,9 @@
   </q-card>
 </template>
 <script>
-import { computed, defineComponent, ref, watch } from "vue";
-import { storeToRefs } from "pinia";
+import { defineComponent, ref, watch } from "vue";
+import { useQuasar } from "quasar";
+
 import { useBalanceStore } from "src/stores/balance";
 
 export default defineComponent({
@@ -55,7 +56,7 @@ export default defineComponent({
     },
   },
   setup(props, { emit }) {
-    console.log(props.currentTarget);
+    const $q = useQuasar();
     const category = props.currentTarget
       ? ref(props.currentTarget.name)
       : ref(props.currentTarget);
@@ -63,23 +64,33 @@ export default defineComponent({
 
     const balanceStore = useBalanceStore();
 
+    watch(
+      () => balanceStore.msg,
+      () => {
+        $q.notify({
+          icon: balanceStore.msg.icon,
+          color: balanceStore.msg.color,
+          message: balanceStore.msg.msg,
+        });
+      }
+    );
     return {
       category,
       categoryValidate,
       onSubmit() {
         categoryValidate.value.validate();
         if (!categoryValidate.value.hasError) {
-          props.currentTarget
-            ? balanceStore.updateCategoriesItem(props.currentTarget.position, {
-                id: props.currentTarget.id,
-                name: category.value,
-              })
-            : balanceStore.addCategoriesItem({ name: category.value });
+          if (props.currentTarget) {
+            balanceStore.updateCategoriesItem(props.currentTarget.position, {
+              id: props.currentTarget.id,
+              name: category.value,
+            });
+          } else balanceStore.addCategoriesItem({ name: category.value });
           emit("toggleModal");
         }
       },
-      removeItemOnClick(itemId) {
-        balanceStore.removeCategoriesItem(itemId);
+      async removeItemOnClick(itemId) {
+        await balanceStore.removeCategoriesItem(itemId);
         emit("toggleModal");
       },
     };

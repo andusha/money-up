@@ -1,24 +1,17 @@
 import { defineStore } from "pinia";
 import { uid, date } from "quasar";
-
-const url = "https://1bc906bf212c0c14.mokky.dev/item?";
+import { api } from "src/boot/axios";
 
 export const useBalanceStore = defineStore("balance", {
   state: () => ({
     balanceItems: [],
+    token: "",
     chartItems: {},
-    categoriesItems: [
-      {
-        id: "1",
-        name: "зарплата",
-      },
-      {
-        id: "12",
-        name: "подработка",
-      },
-    ],
-    currentDate: "2024-03",
-    currentOperationType: '',
+    categoriesItems: [],
+    msg: null,
+    currentDate: "",
+    currentOperationType: "",
+    balanceStats: { income: 0, expense: 0 },
   }),
 
   getters: {
@@ -59,62 +52,224 @@ export const useBalanceStore = defineStore("balance", {
   },
 
   actions: {
-    addBalanceItem(data) {
+    async addBalanceItem(data) {
       let dateId = uid();
       data.id = dateId;
-      if (data.date.includes(this.currentDate)) this.balanceItems.push(data);
+      if (
+        data.date.includes(this.currentDate) &&
+        data.operation === this.currentOperationType
+      ) {
+        this.balanceItems.push(data);
+      }
+
+      const dataToServer = {
+        ...data,
+        category_id: data.category.id,
+      };
+
+      await api
+        .post("/balance/", dataToServer)
+        .then((response) => {
+          if (response.status === 200) {
+            console.log(response);
+            console.log(response);
+          } else {
+            console.log(response.status);
+          }
+        })
+        .catch((error) => {
+          this.msg = {
+            icon: "error",
+            color: "negative",
+            msg: error.response.data.detail,
+          };
+          console.log(error);
+          throw error.response.data.detail;
+        });
     },
-    removeBalanceItem(id) {
+    async removeBalanceItem(id) {
+      const balanceId = this.balanceItems[id].id;
       this.balanceItems.splice(id, 1);
+
+      await api
+        .delete(`/balance/${balanceId}`)
+        .then((response) => {
+          if (response.status === 200) {
+            console.log(response);
+          } else {
+            console.log(response.status);
+          }
+        })
+        .catch((error) => {
+          this.msg = {
+            icon: "error",
+            color: "negative",
+            msg: error.response.data.detail,
+          };
+          console.log(error);
+          throw error.response.data.detail;
+        });
     },
-    updateBalanceItem(id, data) {
+    async updateBalanceItem(id, data) {
+      const balanceId = this.balanceItems[id].id;
       this.balanceItems[id] = data;
+
+      const dataToServer = {
+        ...data,
+        category_id: data.category.id,
+      };
+      await api
+        .patch(`/balance/${balanceId}`, dataToServer)
+        .then((response) => {
+          if (response.status === 200) {
+            console.log(response);
+          } else {
+            console.log(response.status);
+          }
+        })
+        .catch((error) => {
+          this.msg = {
+            icon: "error",
+            color: "negative",
+            msg: error.response.data.detail,
+          };
+          throw error.response.data.detail;
+        });
     },
 
     async setBalanceItems() {
-      const FormatedOperationType = this.currentOperationType
-        ? this.currentOperationType
-        : "expense";
-
-      const resp = await fetch(
-        `${url}date=*${this.currentDate}&operation=${FormatedOperationType}`
-      );
-      const items = await resp.json();
-
-      if (!resp.ok) {
-        throw new Error(items.message || "Something went wrong");
-      }
-
-      this.balanceItems = items;
-
-      this.setChartItems()
+      await api
+        .get("/balance", {
+          params: {
+            date: this.currentDate,
+            operation: this.currentOperationType,
+          },
+        })
+        .then((response) => {
+          if (response.status === 200) {
+            console.log(response);
+            this.balanceItems = response.data;
+          } else {
+            console.log(response.status);
+          }
+        })
+        .catch((error) => {
+          this.msg = {
+            icon: "error",
+            color: "negative",
+            msg: error.response.data.detail,
+          };
+          console.log(error);
+          throw error.response.data.detail;
+        });
     },
 
-    setCurrentDate(currentDate) {
+    setCurrentDate(currentDate = null) {
       if (!currentDate) {
         const date_ = new Date();
-        this.currentDate = date.formatDate(date_);
+        this.currentDate = date.formatDate(date_, "YYYY-MM");
         return;
       }
       this.currentDate = currentDate;
     },
+
     setCurrentOperationType(route) {
       this.currentOperationType = route;
     },
 
-    updateCategoriesItem(id, data) {
+    async updateCategoriesItem(id, data) {
+      const categoryId = this.categoriesItems[id].id;
       this.categoriesItems[id] = data;
+
+      await api
+        .patch(`/categories/${categoryId}`, data)
+        .then((response) => {
+          if (response.status === 200) {
+            this.msg = response.data;
+          } else {
+            console.log(response.status);
+          }
+        })
+        .catch((error) => {
+          this.msg = {
+            icon: "error",
+            color: "negative",
+            msg: error.response.data.detail,
+          };
+          console.log(error);
+          throw error.response.data.detail;
+        });
     },
-    addCategoriesItem(data) {
+
+    async addCategoriesItem(data) {
       let categoryId = uid();
       data.id = categoryId;
+      data.operation = this.currentOperationType;
       this.categoriesItems.push(data);
+
+      await api
+        .post("/categories/", data)
+        .then((response) => {
+          if (response.status === 200) {
+            this.msg = response.data;
+          } else {
+            console.log(response.status);
+          }
+        })
+        .catch((error) => {
+          this.msg = {
+            icon: "error",
+            color: "negative",
+            msg: error.response.data.detail,
+          };
+          console.log(error);
+          throw error.response.data.detail;
+        });
     },
-    removeCategoriesItem(id) {
-      this.categoriesItems.splice(id, 1);
+
+    async removeCategoriesItem(id) {
+      const categoryId = this.categoriesItems[id].id;
+      await api
+        .delete(`/categories/${categoryId}`)
+        .then((response) => {
+          if (response.status === 200) {
+            this.categoriesItems.splice(id, 1);
+            this.msg = response.data;
+          } else {
+            console.log(response.status);
+          }
+        })
+        .catch((error) => {
+          this.msg = {
+            icon: "error",
+            color: "negative",
+            msg: error.response.data.detail,
+          };
+          console.log(error);
+          throw error.response.data.detail;
+        });
     },
+
     async setCategoriesItems() {
-      //
+      await api
+        .get("/categories/")
+        .then((response) => {
+          if (response.status === 200) {
+            console.log(response);
+            this.categoriesItems = response.data;
+          } else {
+            console.log(response.status);
+          }
+        })
+        .catch((error) => {
+          this.msg = {
+            icon: "error",
+            color: "negative",
+            msg: error.response.data.detail,
+          };
+          console.log(error);
+          throw error.response.data.detail;
+        });
     },
 
     setChartItems() {
@@ -123,14 +278,32 @@ export const useBalanceStore = defineStore("balance", {
         series: [],
       };
 
-      const formatedCategories =  this.getFormatedCategoriesItems;
-      console.log(this.balanceItems)
+      const formatedCategories = this.getFormatedCategoriesItems;
+      console.log(formatedCategories);
       for (const [label, series] of Object.entries(formatedCategories)) {
         data.labels.push(label);
         data.series.push(series);
       }
 
-      this.chartItems = data
+      this.chartItems = data;
+    },
+
+    async setBalanceStats() {
+      await api
+        .get("/balance/sort", {
+          params: {
+            date: this.currentDate,
+          },
+        })
+        .then((response) => {
+          if (response.status === 200) {
+            this.balanceStats = response.data;
+          }
+        })
+        .catch((error) => {});
+    },
+    updateBalanceStats(operation, sum) {
+      this.balanceStats[operation] += sum;
     },
   },
 });

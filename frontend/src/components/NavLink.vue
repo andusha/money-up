@@ -3,7 +3,7 @@
     clickableaCe
     :to="link"
     :active="isActive_"
-    @click="toggleActive(title)"
+    @click="toggleState(title)"
     class="q-pa-sm q-pl-md"
     active-class="bg-accent primary-text"
     dark
@@ -16,6 +16,8 @@
 
 <script>
 import { defineComponent, watch } from "vue";
+import { useAuthStore } from "src/stores/auth";
+import auth from "src/boot/auth";
 
 export default defineComponent({
   name: "NavLink",
@@ -33,12 +35,12 @@ export default defineComponent({
     isActive: {
       type: Object,
     },
-
-    toggleActive: {
-      type: Function,
-    },
   },
-  setup(props) {
+
+  emits: "toggleActive",
+  setup(props, { emit }) {
+    const authStore = useAuthStore();
+
     const isActive_ = props.isActive;
     watch(
       () => props.isActive,
@@ -49,6 +51,11 @@ export default defineComponent({
     );
     return {
       isActive_,
+
+      toggleState() {
+        emit("toggleActive");
+        if (props.title === "Выйти") authStore.logout();
+      },
     };
   },
 });

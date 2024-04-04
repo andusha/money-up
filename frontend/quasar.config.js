@@ -10,7 +10,7 @@
 
 const { configure } = require("quasar/wrappers");
 
-module.exports = configure(function (/* ctx */) {
+module.exports = configure(function (ctx) {
   return {
     eslint: {
       // fix: true,
@@ -27,7 +27,7 @@ module.exports = configure(function (/* ctx */) {
     // app boot file (/src/boot)
     // --> boot files are part of "main.js"
     // https://v2.quasar.dev/quasar-cli-vite/boot-files
-    boot: ["apexcharts"],
+    boot: ["apexcharts", "axios", "auth"],
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#css
     css: ["app.scss"],
@@ -53,6 +53,10 @@ module.exports = configure(function (/* ctx */) {
         node: "node20",
       },
 
+      env: {
+        API: ctx.dev ? "http://127.0.0.1:5201" : "/api",
+      },
+
       vueRouterMode: "hash", // available values: 'hash', 'history'
       // vueRouterBase,
       // vueDevtools,
@@ -60,7 +64,7 @@ module.exports = configure(function (/* ctx */) {
 
       // rebuildCache: true, // rebuilds Vite/linter/etc cache on startup
 
-       //publicPath: '/static',
+      //publicPath: '/static',
       // analyze: true,
       // env: {},
       // rawDefine: {}

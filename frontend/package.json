@@ -10,11 +10,13 @@
     "format": "prettier --write \"**/*.{js,vue,scss,html,md,json}\" --ignore-path .gitignore",
     "test": "echo \"No test specified\" && exit 0",
     "dev": "quasar dev",
-    "build": "quasar build"
+    "build": "quasar build",
+    "start": "quasar serve ./dist/spa"
   },
   "dependencies": {
     "@quasar/extras": "^1.16.4",
     "apexcharts": "^3.48.0",
+    "axios": "^1.6.8",
     "pinia": "^2.1.7",
     "quasar": "^2.8.0",
     "vue": "^3.4.18",

@@ -47,7 +47,7 @@
 </template>
 
 <script>
-import { defineComponent, ref, watch } from "vue";
+import { defineComponent, onMounted, ref, watch } from "vue";
 
 import { date } from "quasar";
 
@@ -63,10 +63,10 @@ export default defineComponent({
   setup() {
     const balanceStore = useBalanceStore();
 
-
     const leftDrawerOpen = ref(false);
     const rightDrawerOpen = ref(false);
 
+    balanceStore.setCurrentDate();
     const fullCurrentDate = ref(balanceStore.getFullCurrentDate);
     let formatCurrentDate = date.formatDate(fullCurrentDate.value, "MMMM");
     const month = ref(formatCurrentDate);
@@ -79,13 +79,19 @@ export default defineComponent({
         month.value = formatCurrentDate;
       }
     );
-    function DateFunc(newDate) {
+    async function DateFunc(newDate) {
       const formatedNewDate = date
         .formatDate(newDate, "YYYY-MM-DD")
         .slice(0, 7);
       balanceStore.setCurrentDate(formatedNewDate);
-      balanceStore.setBalanceItems();
+      await balanceStore.setBalanceItems();
+      await balanceStore.setBalanceStats();
+      balanceStore.setChartItems();
     }
+
+    onMounted(async () => {
+      await balanceStore.setCategoriesItems()
+    });
     return {
       month,
 
@@ -104,7 +110,9 @@ export default defineComponent({
         DateFunc(newDate);
       },
       prevMonth() {
-        const newDate = date.subtractFromDate(fullCurrentDate.value, { months: 1 });
+        const newDate = date.subtractFromDate(fullCurrentDate.value, {
+          months: 1,
+        });
         DateFunc(newDate);
       },
     };
@@ -136,7 +144,4 @@ export default defineComponent({
     gap: 5rem;
   }
 }
-
-
 </style>
-

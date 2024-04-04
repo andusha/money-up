@@ -1,9 +1,9 @@
 <template>
   <div class="wrapper">
-    <h4>Изменить категории</h4>
+    <h4 class="q-mt-sm">Изменить категории</h4>
     <q-list class="q-mt-sm grid">
       <CategoriesCard
-        v-for="(category, index) in categoriesItems"
+        v-for="(category, index) in filtredCategoriesItems"
         :key="index"
         :category="category"
         :position="index"
@@ -22,7 +22,7 @@
 </template>
 
 <script>
-import { defineComponent, ref } from "vue";
+import { computed, defineComponent, ref } from "vue";
 import { storeToRefs } from "pinia";
 
 import { useBalanceStore } from "src/stores/balance";
@@ -33,7 +33,7 @@ export default defineComponent({
   components: { CategoriesModal, CategoriesCard },
   setup() {
     const balanceStore = useBalanceStore();
-    const { categoriesItems } = storeToRefs(balanceStore);
+    const { categoriesItems, currentOperationType } = storeToRefs(balanceStore);
 
     const modal = ref(false);
     const currentTarget = ref(null);
@@ -41,8 +41,12 @@ export default defineComponent({
     const toggleModal = () => {
       modal.value = !modal.value;
     };
+
+    const filtredCategoriesItems = computed(() => {
+      return categoriesItems.value.filter((item)=>item.operation === currentOperationType.value)
+    });
     return {
-      categoriesItems,
+      filtredCategoriesItems,
       currentTarget,
       setCurrentTarget(target) {
         currentTarget.value = target;

@@ -54,7 +54,7 @@ module.exports = configure(function (ctx) {
       },
 
       env: {
-        API: ctx.dev ? "http://127.0.0.1:5201" : "/api",
+        API: ctx.dev ? "http://127.0.0.1:5201" : "http://127.0.0.1:5301",
       },
 
       vueRouterMode: "hash", // available values: 'hash', 'history'

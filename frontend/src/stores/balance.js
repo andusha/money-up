@@ -177,12 +177,18 @@ export const useBalanceStore = defineStore("balance", {
       this.currentOperationType = route;
     },
 
-    async updateCategoriesItem(id, data) {
-      const categoryId = this.categoriesItems[id].id;
-      this.categoriesItems[id] = data;
+    async updateCategoriesItem(data) {
+      const FindcategoryIndex = (category) => {
+        return data.id === category.id
+      };
+      
+      data.operation = this.currentOperationType;
+      const categoryIndex = this.categoriesItems.findIndex(FindcategoryIndex)
+      this.categoriesItems[categoryIndex] = data;
 
+      console.log(this.categoriesItems, data, categoryIndex);
       await api
-        .patch(`/categories/${categoryId}`, data)
+        .patch(`/categories/${data.id}`, data)
         .then((response) => {
           if (response.status === 200) {
             this.msg = response.data;
@@ -228,12 +234,17 @@ export const useBalanceStore = defineStore("balance", {
     },
 
     async removeCategoriesItem(id) {
-      const categoryId = this.categoriesItems[id].id;
+      const FindcategoryIndex = (category) => {
+        return category.id === id
+      };
+      const categoryIndex = this.categoriesItems.findIndex(FindcategoryIndex)
+
+      console.log(id, this.categoriesItems)
       await api
-        .delete(`/categories/${categoryId}`)
+        .delete(`/categories/${id}`)
         .then((response) => {
           if (response.status === 200) {
-            this.categoriesItems.splice(id, 1);
+            this.categoriesItems.splice(categoryIndex, 1);
             this.msg = response.data;
           } else {
             console.log(response.status);

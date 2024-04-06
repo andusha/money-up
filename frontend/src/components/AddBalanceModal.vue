@@ -132,7 +132,6 @@ export default defineComponent({
     const category = ref("");
     const categoryValidate = ref(null);
     const categoryOptions = ref(null);
-
     const timeStamp = Date.now();
     const formattedString = date.formatDate(timeStamp, "DD.MM.YY");
     const date_ = ref(formattedString);
@@ -162,6 +161,17 @@ export default defineComponent({
               : operationOptions[1];
           category.value = null;
           sum.value = null;
+        }
+      }
+    );
+    watch(
+      () => operation.value,
+      () => {
+        if (category.value !== null) {
+          category.value =
+            category.value.operation === operation.value.value
+              ? category.value
+              : "";
         }
       }
     );

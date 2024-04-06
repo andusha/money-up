@@ -34,7 +34,7 @@
           label="Удалить"
           class="btn-w btn-color"
           v-if="currentTarget"
-          @click="removeItemOnClick(currentTarget.position)"
+          @click="removeItemOnClick(currentTarget.id)"
         />
       </q-card-actions>
     </q-form>
@@ -81,7 +81,7 @@ export default defineComponent({
         categoryValidate.value.validate();
         if (!categoryValidate.value.hasError) {
           if (props.currentTarget) {
-            balanceStore.updateCategoriesItem(props.currentTarget.position, {
+            balanceStore.updateCategoriesItem({
               id: props.currentTarget.id,
               name: category.value,
             });

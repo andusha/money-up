@@ -2,10 +2,10 @@
 
 ## Установка зависимостей backend
 
-\```
+```
 pip install pipenv
 pipenv install
-\```
+```
 
 ## Установка зависимостей frontend
 
